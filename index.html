@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>srkprofilephoto-app</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;900&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="app">
+
+    <!-- ★ 編集プレビュー（＝出力PNGと完全一致） -->
+    <div class="card" id="card">
+      <!-- 台紙フレーム -->
+      <img src="frame-type1.png" class="frame-img" alt="frame">
+
+      <!-- 写真エリア -->
+      <div class="photo-viewport" id="photoViewport">
+        <img id="photo" class="photo" src="" alt="">
+        <div class="guide-lines"></div>
+      </div>
+
+      <!-- テキスト（名前・愛称・ID・メモ） -->
+      <div class="info">
+        <div class="line name-line">
+          <span class="text name-text" id="nameOut"></span>
+          <span class="guide guide-name">名前</span>
+        </div>
+        <div class="line nick-line">
+          <span class="text nick-text" id="nickOut"></span>
+          <span class="guide guide-nick">ニックネーム</span>
+        </div>
+        <div class="line id-line">
+          <span class="text id-text" id="idOut"></span>
+          <span class="guide guide-id">ID</span>
+        </div>
+        <div class="line memo-line">
+          <span class="text memo-text" id="memoOut"></span>
+          <span class="guide guide-memo">メモ</span>
+        </div>
+      </div>
+    </div><!-- /.card -->
+
+    <!-- ★ コントロールパネル -->
+
+    <!-- 写真選択 -->
+    <div class="file-input-box">
+      <label class="file-btn" for="photoInput">写真を選択</label>
+      <span class="file-text" id="fileNameText">選択されていません</span>
+      <input type="file" id="photoInput" accept="image/*">
+    </div>
+
+    <!-- アコーディオン：写真調整 -->
+    <div class="accordion">
+      <button class="accordion-header" id="photoAccBtn">
+        <span>写真調整</span>
+        <span class="arrow">▼</span>
+      </button>
+
+      <div class="accordion-body" id="photoAccBody">
+        <label>明るさ</label>
+        <input id="brightness" type="range" min="50" max="200" value="100">
+
+        <label>コントラスト</label>
+        <input id="contrast" type="range" min="50" max="200" value="100">
+
+        <label>彩度</label>
+        <input id="saturation" type="range" min="0" max="200" value="100">
+      </div>
+    </div>
+
+    <!-- テキスト入力 -->
+    <div class="input-card">
+      <label>名前</label>
+      <input id="nameInput" class="text-input" placeholder="名前">
+
+      <label>愛称</label>
+      <input id="nickInput" class="text-input" placeholder="愛称">
+
+      <label>ID</label>
+      <input id="idInput" class="text-input" placeholder="A00000">
+
+      <label>メモ</label>
+      <textarea id="memoInput" class="text-input" rows="2" placeholder="メモ"></textarea>
+    </div>
+
+    <button id="saveBtn" class="save-btn">PNG保存</button>
+  </div><!-- /.app -->
+
+  <!-- html2canvas（PNG出力用） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
