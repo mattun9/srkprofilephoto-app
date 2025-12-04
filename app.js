@@ -1,3 +1,21 @@
+// ===============================
+// LINE内ブラウザを自動で外部ブラウザに切り替え
+// ===============================
+(function() {
+  const ua = navigator.userAgent.toLowerCase();
+
+  // LINEアプリ内ブラウザかどうか判定
+  const isLine = ua.indexOf("line") !== -1;
+
+  if (isLine) {
+    // 外部ブラウザで再度開くためのURL（あなたのGitHub Pages URL）
+    const url = "https://mattun9.github.io/srkprofilephoto-app/";
+
+    // 外部ブラウザへ遷移させる
+    window.location.href = url;
+  }
+})();
+
 /* ===============================================
    DOM取得
 ================================================ */
@@ -28,13 +46,13 @@ const accBody = document.getElementById("photoAccBody");
 const arrow   = accBtn.querySelector(".arrow");
 
 /* ===============================================
-   アコーディオン開閉
+   アコーディオン開閉（改善版）
 ================================================ */
 accBtn.addEventListener("click", () => {
-  const open = accBody.style.display === "block";
-  accBody.style.display = open ? "none" : "block";
-  arrow.textContent = open ? "▼" : "▲";
+  accBtn.classList.toggle("open");
+  accBody.classList.toggle("open");
 });
+
 
 /* ===============================================
    写真ロード
@@ -177,6 +195,48 @@ viewport.addEventListener("wheel", (e) => {
 }, { passive: false });
 
 /* ===============================================
+   ▼ スマホのピンチイン／ピンチアウト対応
+================================================ */
+let pinchStartDistance = 0;
+let startScale = 1;
+
+// 2点間距離を計算
+function getDistance(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// ピンチ開始
+viewport.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+
+    pinchStartDistance = getDistance(e.touches);
+    startScale = currentScale;   // 現在のズーム値を覚えておく
+  }
+}, { passive: false });
+
+// ピンチ中
+viewport.addEventListener("touchmove", (e) => {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+
+    const newDistance = getDistance(e.touches);
+    const pinchRatio = newDistance / pinchStartDistance;
+
+    // 新しいscaleを計算
+    currentScale = startScale * pinchRatio;
+
+    // 最小ズームを下回らせない
+    if (currentScale < baseScale) currentScale = baseScale;
+
+    applyPhotoTransform();  // 画像反映（背景見えない制御つき）
+  }
+}, { passive: false });
+
+
+/* ===============================================
    フィルター（明るさ/コントラスト/彩度）
 ================================================ */
 function applyFilter() {
@@ -223,7 +283,6 @@ saveBtn.addEventListener("click", async () => {
     return;
   }
 
-  // ガイド・点線を一時非表示
   card.classList.add("exporting");
 
   try {
@@ -233,14 +292,28 @@ saveBtn.addEventListener("click", async () => {
       useCORS: true
     });
 
+    // ▼ ファイル名：名前 + ID
+    const safeName = nameOut.textContent.replace(/[\\/:*?"<>|]/g, '');
+    const safeId   = idOut.textContent.replace(/[\\/:*?"<>|]/g, '');
+    const fileName = `${safeName}_${safeId}.png`;
+
     const link = document.createElement("a");
-    link.download = "parkrun_card.png";
+    link.download = fileName;
     link.href = canvas.toDataURL("image/png");
+
+    // ▼ ダウンロード実行
     link.click();
+
   } catch (err) {
     console.error(err);
     alert("画像の保存中にエラーが発生しました。");
   } finally {
     card.classList.remove("exporting");
+
+    // ▼ 保存を確実に完了させてからリロード（0.8秒ディレイ）
+    setTimeout(() => {
+      location.reload();
+    }, 800);
   }
 });
+
