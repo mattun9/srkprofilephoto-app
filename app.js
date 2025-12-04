@@ -1,20 +1,18 @@
-// ===============================
-// LINE内ブラウザを自動で外部ブラウザに切り替え
-// ===============================
+// =====================================
+// LINE 内ブラウザでは外部ブラウザへ案内
+// =====================================
 (function() {
   const ua = navigator.userAgent.toLowerCase();
-
-  // LINEアプリ内ブラウザかどうか判定
-  const isLine = ua.indexOf("line") !== -1;
+  const isLine = ua.includes("line");
 
   if (isLine) {
-    // 外部ブラウザで再度開くためのURL（あなたのGitHub Pages URL）
-    const url = "https://mattun9.github.io/srkprofilephoto-app/";
-
-    // 外部ブラウザへ遷移させる
-    window.location.href = url;
+    alert(
+      "このアプリは LINE 内ブラウザでは正常に動作しません。\n\n" +
+      "右上の「…」→『外部ブラウザで開く』を押してご利用ください。"
+    );
   }
 })();
+
 
 /* ===============================================
    DOM取得
@@ -52,7 +50,6 @@ accBtn.addEventListener("click", () => {
   accBtn.classList.toggle("open");
   accBody.classList.toggle("open");
 });
-
 
 /* ===============================================
    写真ロード
@@ -126,7 +123,7 @@ function clampOffset() {
    ▼ 写真の transform 適用（常に clamp 呼ぶ）
 ================================================ */
 function applyPhotoTransform() {
-  clampOffset();  // ★背景を絶対見せない
+  clampOffset();  // ★ 背景を絶対見せない
 
   photo.style.transform =
     `translate(-50%, -50%) translate(${offsetX}px, ${offsetY}px) scale(${currentScale})`;
@@ -146,6 +143,9 @@ viewport.addEventListener("mousedown", startDrag);
 viewport.addEventListener("touchstart", startDrag, { passive: false });
 
 function startDrag(e) {
+  // 2本指以上のときは「ピンチ」用に回すのでドラッグしない
+  if (e.touches && e.touches.length > 1) return;
+
   e.preventDefault();
   if (!photo.src) return;
 
@@ -160,6 +160,13 @@ viewport.addEventListener("touchmove", dragMove, { passive: false });
 
 function dragMove(e) {
   if (!isDragging) return;
+
+  // 2本指になったらドラッグ終了（ピンチ優先）
+  if (e.touches && e.touches.length > 1) {
+    isDragging = false;
+    return;
+  }
+
   e.preventDefault();
 
   const p = getPoint(e);
@@ -235,7 +242,6 @@ viewport.addEventListener("touchmove", (e) => {
   }
 }, { passive: false });
 
-
 /* ===============================================
    フィルター（明るさ/コントラスト/彩度）
 ================================================ */
@@ -269,10 +275,24 @@ function bindText(input, output, guide) {
   update();
 }
 
+// 名前・ニックネーム・メモは共通処理
 bindText(nameInput, nameOut, guideName);
 bindText(nickInput, nickOut, guideNick);
-bindText(idInput,   idOut,   guideId);
 bindText(memoInput, memoOut, guideMemo);
+
+/* ===============================================
+   ID入力 → 常に「A + 数字」で反映
+================================================ */
+function updateId() {
+  // 入力値から数字だけにする
+  let raw = idInput.value.replace(/\D/g, "");
+  idInput.value = raw;                 // 入力欄は数字のみ
+  idOut.textContent = raw ? "A" + raw : "";
+  guideId.style.display = raw ? "none" : "block";
+}
+
+idInput.addEventListener("input", updateId);
+updateId();
 
 /* ===============================================
    PNG保存（カードだけを高解像度で）
@@ -292,10 +312,13 @@ saveBtn.addEventListener("click", async () => {
       useCORS: true
     });
 
-    // ▼ ファイル名：名前 + ID
+    // ▼ ファイル名：名前 + A + 数字ID
     const safeName = nameOut.textContent.replace(/[\\/:*?"<>|]/g, '');
-    const safeId   = idOut.textContent.replace(/[\\/:*?"<>|]/g, '');
-    const fileName = `${safeName}_${safeId}.png`;
+    const rawId    = idInput.value.replace(/\D/g, '');
+    const safeId   = rawId ? "A" + rawId : "";
+    const fileName = safeId
+      ? `${safeName}_${safeId}.png`
+      : `${safeName}.png`;
 
     const link = document.createElement("a");
     link.download = fileName;
@@ -316,4 +339,3 @@ saveBtn.addEventListener("click", async () => {
     }, 800);
   }
 });
-

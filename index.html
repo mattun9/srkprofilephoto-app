@@ -80,7 +80,11 @@
       <input id="nickInput" class="text-input" placeholder="ニックネーム等">
 
       <label>ID</label>
-      <input id="idInput" class="text-input" placeholder="A00000 (半角英数字)">
+      <input id="idInput"
+             class="text-input"
+             placeholder="数字のみ"
+             inputmode="numeric"
+             pattern="[0-9]*">
 
       <label>メモ</label>
       <textarea id="memoInput" class="text-input" rows="2" placeholder="メモ"></textarea>
