@@ -1,17 +1,22 @@
-// =====================================
-// LINE 内ブラウザでは外部ブラウザへ案内
-// =====================================
+// =========================================================
+// ① LINE 内ブラウザ → 自動で外部ブラウザに切り替える（無限ループ防止版）
+// =========================================================
 (function() {
   const ua = navigator.userAgent.toLowerCase();
   const isLine = ua.includes("line");
 
-  if (isLine) {
-    alert(
-      "このアプリは LINE 内ブラウザでは正常に動作しません。\n\n" +
-      "右上の「…」→『外部ブラウザで開く』を押してご利用ください。"
-    );
+  // すでに外部ブラウザ遷移した場合はパラメータが付いている
+  const alreadyRedirected = location.search.includes("from=line");
+
+  if (isLine && !alreadyRedirected) {
+    // ★ ここにあなたの GitHub Pages のURLを記載
+    const url = "https://mattun9.github.io/srkprofilephoto-app/";
+
+    // 外部ブラウザに遷移（パラメータ付き）
+    window.location.href = url + "?from=line";
   }
 })();
+
 
 
 /* ===============================================
