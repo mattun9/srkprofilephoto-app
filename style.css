@@ -371,16 +371,25 @@ label {
 }
 
 .reset-btn {
-  width: 100%;
-  margin-top: 12px;
-  padding: 14px 0;
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 160px;         /* ← 小さくする */
+  padding: 10px 0;
+  margin: 20px auto;    /* 中央寄せ */
+
+  font-size: 16px;
   font-weight: 700;
+
+  background-color: #555;
   color: #fff;
-  background-color: #4d4d4d; /* PNG保存より少し薄いグレー */
+  border-radius: 10px;
   border: none;
-  border-radius: 12px;
+
+  cursor: pointer;
 }
+
 
 .reset-btn:active {
   background-color: #3c3c3c;
