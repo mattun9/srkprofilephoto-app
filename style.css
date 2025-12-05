@@ -372,18 +372,18 @@ label {
 
 .reset-btn {
   width: 100%;
-  margin-top: 10px;
-  padding: 14px;
+  margin-top: 12px;
+  padding: 14px 0;
   font-size: 18px;
   font-weight: 700;
+  color: #fff;
+  background-color: #4d4d4d; /* PNG保存より少し薄いグレー */
   border: none;
   border-radius: 12px;
-  background-color: #ddd;
-  color: #333;
 }
 
 .reset-btn:active {
-  background-color: #ccc;
+  background-color: #3c3c3c;
 }
 
 
