@@ -7,7 +7,7 @@
   const already = location.search.includes("from=line");
 
   if (isLine && !already) {
-    alert("LINE のブラウザでは保存ができません。\n右上「・・・」→『外部ブラウザで開く』を押してください。");
+    alert("LINE のブラウザでは保存ができません。\n右下「・・・」→『デフォルトのブラウザで開く』を押してください。");
   }
 })();
 
