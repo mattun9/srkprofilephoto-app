@@ -333,3 +333,7 @@ saveBtn.addEventListener("click", async () => {
     card.classList.remove("exporting");
   }
 });
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  location.reload();
+});
