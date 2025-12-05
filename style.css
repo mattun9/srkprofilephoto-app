@@ -336,3 +336,39 @@ label {
 .exporting .photo-viewport {
   border: none !important;
 }
+
+/* === ID 入力欄：A を完全中央に配置 === */
+.id-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* A の位置を flex で完全中央に */
+.id-prefix {
+  position: absolute;
+  left: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 100%;
+  transform: translateY(-6.5px);  /* ← これで微調整（上に1px） */
+
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  pointer-events: none;
+}
+
+
+/* 入力欄（text-input と高さ合わせる） */
+.id-input {
+  padding-left: 36px !important; /* Aの幅ぶん余白 */
+  font-size: 16px;
+  line-height: normal;  /* ← text-input と同じ */
+  height: auto;         /* ← 44px固定を解除 */
+}
+
+
+

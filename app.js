@@ -1,43 +1,41 @@
 // =========================================================
-// ① LINE 内ブラウザ → 自動で外部ブラウザに切り替える（無限ループ防止版）
+// ① LINE 内ブラウザ → 警告表示のみ（リダイレクトしない）
 // =========================================================
-(function() {
+(function () {
   const ua = navigator.userAgent.toLowerCase();
   const isLine = ua.includes("line");
+  const already = location.search.includes("from=line");
 
-  const alreadyRedirected = location.search.includes("from=line");
-
-  if (isLine && !alreadyRedirected) {
-    const url = "https://mattun9.github.io/srkprofilephoto-app/";
-    window.location.href = url + "?from=line";
+  if (isLine && !already) {
+    alert("LINE のブラウザでは保存ができません。\n右上「・・・」→『外部ブラウザで開く』を押してください。");
   }
 })();
 
 /* ===============================================
    DOM取得
 ================================================ */
-const photoInput   = document.getElementById("photoInput");
-const photo        = document.getElementById("photo");
-const viewport     = document.getElementById("photoViewport");
+const photoInput = document.getElementById("photoInput");
+const photo = document.getElementById("photo");
+const viewport = document.getElementById("photoViewport");
 
-const brightness   = document.getElementById("brightness");
-const contrast     = document.getElementById("contrast");
-const saturation   = document.getElementById("saturation");
+const brightness = document.getElementById("brightness");
+const contrast = document.getElementById("contrast");
+const saturation = document.getElementById("saturation");
 
-const nameInput    = document.getElementById("nameInput");
-const nickInput    = document.getElementById("nickInput");
-const idInput      = document.getElementById("idInput");
-const memoInput    = document.getElementById("memoInput");
+const nameInput = document.getElementById("nameInput");
+const nickInput = document.getElementById("nickInput");
+const idInput = document.getElementById("idInput");
+const memoInput = document.getElementById("memoInput");
 
-const nameOut      = document.getElementById("nameOut");
-const nickOut      = document.getElementById("nickOut");
-const idOut        = document.getElementById("idOut");
-const memoOut      = document.getElementById("memoOut");
+const nameOut = document.getElementById("nameOut");
+const nickOut = document.getElementById("nickOut");
+const idOut = document.getElementById("idOut");
+const memoOut = document.getElementById("memoOut");
 
-const saveBtn      = document.getElementById("saveBtn");
-const card         = document.getElementById("card");
+const saveBtn = document.getElementById("saveBtn");
+const card = document.getElementById("card");
 
-const accBtn  = document.getElementById("photoAccBtn");
+const accBtn = document.getElementById("photoAccBtn");
 const accBody = document.getElementById("photoAccBody");
 
 /* ===============================================
@@ -56,6 +54,7 @@ let startX = 0;
 let startY = 0;
 let offsetX = 0;
 let offsetY = 0;
+
 let currentScale = 1;
 let baseScale = 1;
 
@@ -78,11 +77,12 @@ photo.addEventListener("load", () => {
 });
 
 /* ===============================================
-   写真をフレームにフィット
+   写真フィット
 ================================================ */
 function fitPhotoToViewport() {
   const vpW = viewport.clientWidth;
   const vpH = viewport.clientHeight;
+
   const imgW = photo.naturalWidth;
   const imgH = photo.naturalHeight;
   if (!imgW || !imgH) return;
@@ -91,6 +91,7 @@ function fitPhotoToViewport() {
 
   baseScale = scale;
   currentScale = scale;
+
   offsetX = 0;
   offsetY = 0;
 
@@ -98,11 +99,12 @@ function fitPhotoToViewport() {
 }
 
 /* ===============================================
-   移動制限（背景を絶対見せない）
+   移動制限（背景が見えない）
 ================================================ */
 function clampOffset() {
   const vpW = viewport.clientWidth;
   const vpH = viewport.clientHeight;
+
   const imgW = photo.naturalWidth * currentScale;
   const imgH = photo.naturalHeight * currentScale;
 
@@ -120,16 +122,14 @@ function applyPhotoTransform() {
 }
 
 /* =========================================================
-   ★★★ 最新：1本指ドラッグ + 2本指ピンチ＋2本指移動 完全版 ★★★
+   1本指ドラッグ + 2本指ピンチ＋2本指移動
 ========================================================= */
 
-// --- 共通変数 ---
 let pinchStartDistance = 0;
 let startScale = 1;
 let pinchStartCenter = { x: 0, y: 0 };
 let pinchStartOffset = { x: 0, y: 0 };
 
-// --- 位置取得 ---
 function getPoint(e) {
   if (e.touches && e.touches[0]) {
     return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -137,18 +137,16 @@ function getPoint(e) {
   return { x: e.clientX, y: e.clientY };
 }
 
-// --- 2点距離 ---
 function getDistance(t) {
   const dx = t[0].clientX - t[1].clientX;
   const dy = t[0].clientY - t[1].clientY;
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-// --- 2点の中心 ---
 function getCenter(t) {
   return {
     x: (t[0].clientX + t[1].clientX) / 2,
-    y: (t[0].clientX + t[1].clientX) / 2
+    y: (t[0].clientY + t[1].clientY) / 2
   };
 }
 
@@ -160,8 +158,8 @@ viewport.addEventListener("touchstart", (e) => {
 
 function startDrag(e) {
   if (e.touches && e.touches.length > 1) return;
-
   e.preventDefault();
+
   if (!photo.src) return;
 
   isDragging = true;
@@ -185,17 +183,18 @@ function dragMove(e) {
 
   e.preventDefault();
   const p = getPoint(e);
+
   offsetX = p.x - startX;
   offsetY = p.y - startY;
 
   applyPhotoTransform();
 }
 
-viewport.addEventListener("mouseup", () => (isDragging = false));
-viewport.addEventListener("mouseleave", () => (isDragging = false));
-viewport.addEventListener("touchend", () => (isDragging = false));
+viewport.addEventListener("mouseup", () => isDragging = false);
+viewport.addEventListener("mouseleave", () => isDragging = false);
+viewport.addEventListener("touchend", () => isDragging = false);
 
-/* --- 2本指ピンチ & パン --- */
+/* --- 2本指ピンチ + 移動 --- */
 viewport.addEventListener("touchstart", (e) => {
   if (e.touches.length === 2) {
     e.preventDefault();
@@ -214,8 +213,7 @@ viewport.addEventListener("touchmove", (e) => {
     const newDist = getDistance(e.touches);
     const ratio = newDist / pinchStartDistance;
 
-    currentScale = startScale * ratio;
-    if (currentScale < baseScale) currentScale = baseScale;
+    currentScale = Math.max(baseScale, startScale * ratio);
 
     const newCenter = getCenter(e.touches);
     offsetX = pinchStartOffset.x + (newCenter.x - pinchStartCenter.x);
@@ -226,16 +224,14 @@ viewport.addEventListener("touchmove", (e) => {
 }, { passive: false });
 
 /* ===============================================
-   PCホイール拡大
+   ホイール拡大
 ================================================ */
 viewport.addEventListener("wheel", (e) => {
   if (!photo.src) return;
 
   e.preventDefault();
   const delta = e.deltaY > 0 ? 0.9 : 1.1;
-  currentScale *= delta;
-
-  if (currentScale < baseScale) currentScale = baseScale;
+  currentScale = Math.max(baseScale, currentScale * delta);
 
   applyPhotoTransform();
 }, { passive: false });
@@ -252,11 +248,11 @@ function applyFilter() {
 });
 
 /* ===============================================
-   テキスト入力
+   テキスト入力バインド
 ================================================ */
 const guideName = document.querySelector(".guide-name");
 const guideNick = document.querySelector(".guide-nick");
-const guideId   = document.querySelector(".guide-id");
+const guideId = document.querySelector(".guide-id");
 const guideMemo = document.querySelector(".guide-memo");
 
 function bindText(input, output, guide) {
@@ -268,24 +264,34 @@ function bindText(input, output, guide) {
   input.addEventListener("input", update);
   update();
 }
+
 bindText(nameInput, nameOut, guideName);
 bindText(nickInput, nickOut, guideNick);
 bindText(memoInput, memoOut, guideMemo);
 
 /* ===============================================
-   ID → 常に A + 数字
+   ID → A + 数字
 ================================================ */
 function updateId() {
-  let raw = idInput.value.replace(/\D/g, "");
-  idInput.value = raw;
-  idOut.textContent = raw ? "A" + raw : "";
-  guideId.style.display = raw ? "none" : "block";
+  let raw = idInput.value.replace(/\D/g, ""); // 数字のみ抽出
+  idInput.value = raw; // 入力欄は数字のみにする
+
+  // カードに表示する ID
+  if (raw) {
+    idOut.textContent = "A" + raw;
+    guideId.style.display = "none";
+  } else {
+    idOut.textContent = "";  // A を表示しない（未入力時は空欄）
+    guideId.style.display = "block";
+  }
 }
+
 idInput.addEventListener("input", updateId);
 updateId();
 
+
 /* ===============================================
-   PNG保存
+   PNG保存（iPhone対応）
 ================================================ */
 saveBtn.addEventListener("click", async () => {
   if (!window.html2canvas) {
@@ -302,19 +308,28 @@ saveBtn.addEventListener("click", async () => {
       useCORS: true
     });
 
-    const safeName = nameOut.textContent.replace(/[\\/:*?"<>|]/g, '');
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+
+    const safeName = nameOut.textContent.replace(/[\\/:*?"<>|]/g, '') || "card";
     const rawId = idInput.value.replace(/\D/g, '');
-    const fileName = rawId
-      ? `${safeName}_A${rawId}.png`
-      : `${safeName}.png`;
+    const fileName = rawId ? `${safeName}_A${rawId}.png` : `${safeName}.png`;
 
-    const link = document.createElement("a");
-    link.download = fileName;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    // iPhone Safari
+    if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName)] })) {
+      const file = new File([blob], fileName, { type: "image/png" });
+      await navigator.share({ files: [file], title: fileName });
+    } else {
+      const link = document.createElement("a");
+      link.download = fileName;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
 
+  } catch (err) {
+    console.error(err);
+    alert("保存に失敗しました");
   } finally {
     card.classList.remove("exporting");
-    setTimeout(() => location.reload(), 800);
   }
 });
