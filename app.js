@@ -308,23 +308,23 @@ saveBtn.addEventListener("click", async () => {
       useCORS: true
     });
 
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+    canvas.toBlob((blob) => {
+      const safeName = nameOut.textContent.replace(/[\\/:*?"<>|]/g, '') || "card";
+      const rawId = idInput.value.replace(/\D/g, '');
+      const fileName = rawId ? `${safeName}_A${rawId}.png` : `${safeName}.png`;
 
-    const safeName = nameOut.textContent.replace(/[\\/:*?"<>|]/g, '') || "card";
-    const rawId = idInput.value.replace(/\D/g, '');
-    const fileName = rawId ? `${safeName}_A${rawId}.png` : `${safeName}.png`;
-
-    // iPhone Safari
-    if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName)] })) {
-      const file = new File([blob], fileName, { type: "image/png" });
-      await navigator.share({ files: [file], title: fileName });
-    } else {
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
+
+      link.href = url;
       link.download = fileName;
-      link.href = URL.createObjectURL(blob);
+
+      document.body.appendChild(link);
       link.click();
-      URL.revokeObjectURL(link.href);
-    }
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    }, "image/png");
 
   } catch (err) {
     console.error(err);
