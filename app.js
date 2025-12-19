@@ -7,7 +7,9 @@
   const already = location.search.includes("from=line");
 
   if (isLine && !already) {
-    alert("LINE のブラウザでは保存ができません。\n右下「・・・」→『デフォルトのブラウザで開く』を押してください。");
+    alert(
+      "LINE のブラウザでは保存ができません。\n右下「・・・」→『デフォルトのブラウザで開く』を押してください。"
+    );
   }
 })();
 
@@ -124,7 +126,6 @@ function applyPhotoTransform() {
 /* =========================================================
    1本指ドラッグ + 2本指ピンチ＋2本指移動
 ========================================================= */
-
 let pinchStartDistance = 0;
 let startScale = 1;
 let pinchStartCenter = { x: 0, y: 0 };
@@ -159,7 +160,6 @@ viewport.addEventListener("touchstart", (e) => {
 function startDrag(e) {
   if (e.touches && e.touches.length > 1) return;
   e.preventDefault();
-
   if (!photo.src) return;
 
   isDragging = true;
@@ -193,8 +193,9 @@ function dragMove(e) {
 viewport.addEventListener("mouseup", () => isDragging = false);
 viewport.addEventListener("mouseleave", () => isDragging = false);
 viewport.addEventListener("touchend", () => isDragging = false);
+viewport.addEventListener("touchcancel", () => isDragging = false);
 
-/* --- 2本指ピンチ + 移動 --- */
+/* --- 2本指ピンチ + 2本指移動 --- */
 viewport.addEventListener("touchstart", (e) => {
   if (e.touches.length === 2) {
     e.preventDefault();
@@ -237,7 +238,7 @@ viewport.addEventListener("wheel", (e) => {
 }, { passive: false });
 
 /* ===============================================
-   フィルター
+   フィルター（プレビュー）
 ================================================ */
 function applyFilter() {
   photo.style.filter =
@@ -273,67 +274,136 @@ bindText(memoInput, memoOut, guideMemo);
    ID → A + 数字
 ================================================ */
 function updateId() {
-  let raw = idInput.value.replace(/\D/g, ""); // 数字のみ抽出
-  idInput.value = raw; // 入力欄は数字のみにする
+  let raw = idInput.value.replace(/\D/g, "");
+  idInput.value = raw;
 
-  // カードに表示する ID
   if (raw) {
     idOut.textContent = "A" + raw;
     guideId.style.display = "none";
   } else {
-    idOut.textContent = "";  // A を表示しない（未入力時は空欄）
+    idOut.textContent = "";
     guideId.style.display = "block";
   }
 }
-
 idInput.addEventListener("input", updateId);
 updateId();
 
+/* ===============================================
+   保存用：フィルターを画像に焼き付け（確実に反映）
+================================================ */
+async function bakeFilteredPhotoDataURL() {
+  if (!photo.src || !photo.naturalWidth || !photo.naturalHeight) return null;
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = photo.naturalWidth;
+  canvas.height = photo.naturalHeight;
+
+  ctx.filter =
+    `brightness(${brightness.value}%) contrast(${contrast.value}%) saturate(${saturation.value}%)`;
+
+  ctx.drawImage(photo, 0, 0);
+
+  // JPEGでOK（html2canvas側がJPEG出力なので）
+  return canvas.toDataURL("image/jpeg", 1.0);
+}
 
 /* ===============================================
-   PNG保存（iPhone対応）
+   小物：描画反映待ち（exporting適用・DOM反映用）
+================================================ */
+function nextFrame() {
+  return new Promise((r) => requestAnimationFrame(() => r()));
+}
+
+function waitImageLoad(imgEl) {
+  return new Promise((resolve) => {
+    if (imgEl.complete && imgEl.naturalWidth) return resolve();
+    imgEl.addEventListener("load", () => resolve(), { once: true });
+    imgEl.addEventListener("error", () => resolve(), { once: true });
+  });
+}
+
+/* ===============================================
+   JPEG保存（カード全体・ガイド非表示・調整反映）
 ================================================ */
 saveBtn.addEventListener("click", async () => {
   if (!window.html2canvas) {
     alert("html2canvas が読み込まれていません");
     return;
   }
+  if (!photo.src) {
+    alert("写真を選択してください");
+    return;
+  }
 
+    // ▼ アニメーション開始
+  saveBtn.classList.add("loading");
+
+  // ① export用の見た目にする（ガイド・点線を消す）
   card.classList.add("exporting");
+
+  // ★ 反映待ち（これを入れないとガイドが写る）
+  await nextFrame();
+  await nextFrame();
+
+  // ② フィルターを確実に出力へ反映するため、保存時だけ焼き付け画像に差し替える
+  const originalSrc = photo.src;
+  const baked = await bakeFilteredPhotoDataURL();
+
+  if (baked) {
+    photo.src = baked;
+    await waitImageLoad(photo); // ★差し替え反映待ち
+    await nextFrame();
+  }
 
   try {
     const canvas = await html2canvas(card, {
-      backgroundColor: null,
+      backgroundColor: "#ffffff", // JPEGは白背景
       scale: 2,
       useCORS: true
     });
 
-    canvas.toBlob((blob) => {
-      const safeName = nameOut.textContent.replace(/[\\/:*?"<>|]/g, '') || "card";
-      const rawId = idInput.value.replace(/\D/g, '');
-      const fileName = rawId ? `${safeName}_A${rawId}.png` : `${safeName}.png`;
+    canvas.toBlob(
+      (blob) => {
+        const safeName =
+          nameOut.textContent.replace(/[\\/:*?"<>|]/g, "") || "card";
+        const rawId = idInput.value.replace(/\D/g, "");
+        const fileName = rawId
+          ? `${safeName}_A${rawId}.jpg`
+          : `${safeName}.jpg`;
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
 
-      link.href = url;
-      link.download = fileName;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-    }, "image/png");
-
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      },
+      "image/jpeg",
+      0.92
+    );
   } catch (err) {
     console.error(err);
     alert("保存に失敗しました");
   } finally {
+    // ③ 元に戻す
+    photo.src = originalSrc;
+    // 元画像への戻しは非同期なので、ここでは待たなくてOK（表示はすぐ戻る）
     card.classList.remove("exporting");
+    
+    // ▼ アニメーション終了
+    saveBtn.classList.remove("loading");
   }
 });
 
-document.getElementById("resetBtn").addEventListener("click", () => {
-  location.reload();
-});
+/* ===============================================
+   リセット
+================================================ */
+const resetBtn = document.getElementById("resetBtn");
+if (resetBtn) {
+  resetBtn.addEventListener("click", () => location.reload());
+}
