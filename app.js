@@ -332,12 +332,30 @@ saveBtn.addEventListener("click", async () => {
     alert("html2canvas が読み込まれていません");
     return;
   }
+
+  // ★ 必須：名前
+  const nameVal = nameInput.value.trim();
+  if (!nameVal) {
+    alert("名前を入力してください");
+    nameInput.focus();
+    return;
+  }
+
+  // ★ 必須：ID（数字）
+  const rawIdNow = idInput.value.replace(/\D/g, "");
+  if (!rawIdNow) {
+    alert("ID（数字）を入力してください");
+    idInput.focus();
+    return;
+  }
+
+  // ★ 必須：写真
   if (!photo.src) {
     alert("写真を選択してください");
     return;
   }
 
-    // ▼ アニメーション開始
+  // ▼ アニメーション開始
   saveBtn.classList.add("loading");
 
   // ① export用の見た目にする（ガイド・点線を消す）
@@ -360,7 +378,7 @@ saveBtn.addEventListener("click", async () => {
   try {
     const canvas = await html2canvas(card, {
       backgroundColor: "#ffffff", // JPEGは白背景
-      scale: 2,
+      scale: 3,                  // ★ 画質UP（元は2）
       useCORS: true
     });
 
@@ -369,9 +387,7 @@ saveBtn.addEventListener("click", async () => {
         const safeName =
           nameOut.textContent.replace(/[\\/:*?"<>|]/g, "") || "card";
         const rawId = idInput.value.replace(/\D/g, "");
-        const fileName = rawId
-          ? `${safeName}_A${rawId}.jpg`
-          : `${safeName}.jpg`;
+        const fileName = `${safeName}_A${rawId}.jpg`;
 
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -394,7 +410,7 @@ saveBtn.addEventListener("click", async () => {
     photo.src = originalSrc;
     // 元画像への戻しは非同期なので、ここでは待たなくてOK（表示はすぐ戻る）
     card.classList.remove("exporting");
-    
+
     // ▼ アニメーション終了
     saveBtn.classList.remove("loading");
   }
